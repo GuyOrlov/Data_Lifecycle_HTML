@@ -10,7 +10,7 @@ An accessible, no-JavaScript stacked-card walkthrough of the data lifecycle (Bus
 ## Preview
 
 <!-- Add your own screenshot or GIF here -->
-![Preview of stacked cards UI](assets/preview.png)
+![Preview of stacked cards UI](Screenshot 2025-09-06 215850.png)
 
 ---
 
