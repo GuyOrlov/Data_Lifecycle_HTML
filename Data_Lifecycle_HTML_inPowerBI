@@ -1,0 +1,289 @@
+Data_Lifecycle_HTML = 
+"
+<!--
+  Project: Data Lifecycle – Stacked Cards (Power BI HTML)
+  Repo idea (for GitHub):
+    / (root)
+      ├─ index.html          -> this file as plain HTML (remove the outer DAX string)
+      ├─ /assets/images      -> optional local images if not using external links
+      ├─ README.md           -> setup, usage notes, and Power BI tips
+      └─ LICENSE             -> e.g., MIT
+  Notes:
+    - This component uses pure HTML/CSS + radio inputs (no JS), ideal for Power BI HTML Content visuals.
+    - Change images to your own sources if needed; Unsplash/Picsum links are used as defaults.
+    - Adjust the stack heights by editing the translateY values in the 'stack positions' section.
+-->
+
+<style>
+  /* ===== Base & Layout ===== */
+  *{box-sizing:border-box;font-family:Arial, sans-serif;}
+  html,body{margin:0;padding:0;height:100%;}
+
+  /* Container used in Power BI HTML visual to center and pad content */
+  .pbi-center{
+    width:100%; height:100%;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:flex-start;
+    padding:16px;
+  }
+
+  /* Max readable width; clamps to 48rem while remaining responsive */
+  .wrapper{width:min(calc(100% - 2rem),48rem);}
+
+  /* The stage that holds the stacked card articles */
+  section{
+    position:relative; width:100%; height:520px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ===== Accessibility Helpers ===== */
+  /* Visually hide the radios but keep them accessible for screen readers */
+  .sr-only{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
+
+  /* ===== Card (Article) Styles ===== */
+  article{
+    position:absolute; width:100%; background:#fff; border-radius:10px; overflow:hidden;
+    transition:transform 400ms ease, opacity 400ms ease;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+  }
+  /* Subtle dotted halo background using a radial pattern */
+  article::before{
+    content:''; position:absolute; inset:-20px; border-radius:14px;
+    background-image:radial-gradient(rgba(0,0,0,.08) 1px, transparent 0);
+    background-repeat:repeat; background-size:5px 5px; pointer-events:none;
+  }
+
+  /* Header row with title & the 'next' chevron label */
+  article>header{
+    padding:.6rem 1rem; display:flex; align-items:center; justify-content:space-between; border-radius:10px 10px 0 0;
+  }
+  article>header h2{margin:0; font-weight:700; font-size:1.05rem;}
+  /* The label targets the next radio (acts like a button). Rotates on hover for feedback */
+  article>header label{
+    cursor:pointer; color:#333; display:inline-block; line-height:1;
+    transform-origin:center; transition:transform 300ms ease; user-select:none;
+  }
+  article>header label:hover{transform:rotate(90deg);}
+
+  /* Card body: image + text grid. Becomes 2-column on >=640px */
+  article>div{
+    padding:1.25rem 1.5rem 1.5rem; display:grid; grid-template-columns:1fr; gap:1.25rem; align-items:start;
+  }
+  @media (min-width:640px){article>div{grid-template-columns:1fr 2fr;}}
+  article img{width:100%; height:auto; max-height:200px; object-fit:cover; border-radius:6px;}
+  /* Scrollable narrative box */
+  .story{width:100%; height:220px; overflow:auto;}
+  .story p{margin:0 0 .9rem 0; font-size:.95rem; line-height:1.55;}
+
+  /* ===== Header Colour Accents per Step ===== */
+  #article-1>header{background:rgba(92,181,60,.45);}    /* green tint – Business Understanding */
+  #article-2>header{background:rgba(0,169,224,.35);}    /* blue – Data Mining */
+  #article-3>header{background:rgba(0,160,176,.35);}    /* teal – Data Cleaning */
+  #article-4>header{background:rgba(155,43,79,.3);}     /* wine – Data Exploration */
+  #article-5>header{background:rgba(221,68,24,.35);}    /* red/orange – Feature Engineering */
+  #article-6>header{background:rgba(244,120,32,.4);}    /* orange – Predictive Modelling */
+  #article-7>header{background:rgba(255,198,64,.45);}   /* yellow – Data Visualization */
+
+  /* ===== Stack Positions (Initial) =====
+     - Each article is offset upward and slightly scaled down to form a stack.
+     - z-index and opacity taper to create depth.
+     - Tweak translateY/scale to compress/expand the stack visually.
+  */
+  #article-1{transform:translateY(0) scale(1);opacity:1;z-index:7;}
+  #article-2{transform:translateY(-48px) scale(.95);opacity:.9;z-index:6;}
+  #article-3{transform:translateY(-96px) scale(.9);opacity:.85;z-index:5;}
+  #article-4{transform:translateY(-144px) scale(.85);opacity:.8;z-index:4;}
+  #article-5{transform:translateY(-192px) scale(.8);opacity:.75;z-index:3;}
+  #article-6{transform:translateY(-240px) scale(.75);opacity:.7;z-index:2;}
+  #article-7{transform:translateY(-288px) scale(.7);opacity:.65;z-index:1;}
+
+  /* ===== Checked States =====
+     - Each radio (#card-n) brings its matching article to the front
+       and pushes the following cards behind in consistent steps.
+     - The label chevron on each header points to the *next* radio.
+       The last card (#7) loops back to #1 for a circular flow.
+  */
+  #card-1:checked~#article-1{transform:translateY(0) scale(1);opacity:1;z-index:7;}
+  #card-1:checked~#article-2{transform:translateY(-48px) scale(.95);opacity:.9;z-index:6;}
+  #card-1:checked~#article-3{transform:translateY(-96px) scale(.9);opacity:.85;z-index:5;}
+  #card-1:checked~#article-4{transform:translateY(-144px) scale(.85);opacity:.8;z-index:4;}
+  #card-1:checked~#article-5{transform:translateY(-192px) scale(.8);opacity:.75;z-index:3;}
+  #card-1:checked~#article-6{transform:translateY(-240px) scale(.75);opacity:.7;z-index:2;}
+  #card-1:checked~#article-7{transform:translateY(-288px) scale(.7);opacity:.65;z-index:1;}
+
+  #card-2:checked~#article-2{transform:translateY(0) scale(1);opacity:1;z-index:7;}
+  #card-2:checked~#article-3{transform:translateY(-48px) scale(.95);opacity:.9;z-index:6;}
+  #card-2:checked~#article-4{transform:translateY(-96px) scale(.9);opacity:.85;z-index:5;}
+  #card-2:checked~#article-5{transform:translateY(-144px) scale(.85);opacity:.8;z-index:4;}
+  #card-2:checked~#article-6{transform:translateY(-192px) scale(.8);opacity:.75;z-index:3;}
+  #card-2:checked~#article-7{transform:translateY(-240px) scale(.8);opacity:.7;z-index:2;}
+  #card-2:checked~#article-1{transform:translateY(-288px) scale(.7);opacity:.65;z-index:1;}
+
+  #card-3:checked~#article-3{transform:translateY(0) scale(1);opacity:1;z-index:7;}
+  #card-3:checked~#article-4{transform:translateY(-48px) scale(.95);opacity:.9;z-index:6;}
+  #card-3:checked~#article-5{transform:translateY(-96px) scale(.9);opacity:.85;z-index:5;}
+  #card-3:checked~#article-6{transform:translateY(-144px) scale(.85);opacity:.8;z-index:4;}
+  #card-3:checked~#article-7{transform:translateY(-192px) scale(.8);opacity:.75;z-index:3;}
+  #card-3:checked~#article-1{transform:translateY(-240px) scale(.75);opacity:.7;z-index:2;}
+  #card-3:checked~#article-2{transform:translateY(-288px) scale(.7);opacity:.65;z-index:1;}
+
+  #card-4:checked~#article-4{transform:translateY(0) scale(1);opacity:1;z-index:7;}
+  #card-4:checked~#article-5{transform:translateY(-48px) scale(.95);opacity:.9;z-index:6;}
+  #card-4:checked~#article-6{transform:translateY(-96px) scale(.9);opacity:.85;z-index:5;}
+  #card-4:checked~#article-7{transform:translateY(-144px) scale(.85);opacity:.8;z-index:4;}
+  #card-4:checked~#article-1{transform:translateY(-192px) scale(.8);opacity:.75;z-index:3;}
+  #card-4:checked~#article-2{transform:translateY(-240px) scale(.75);opacity:.7;z-index:2;}
+  #card-4:checked~#article-3{transform:translateY(-288px) scale(.7);opacity:.65;z-index:1;}
+
+  #card-5:checked~#article-5{transform:translateY(0) scale(1);opacity:1;z-index:7;}
+  #card-5:checked~#article-6{transform:translateY(-48px) scale(.95);opacity:.9;z-index:6;}
+  #card-5:checked~#article-7{transform:translateY(-96px) scale(.9);opacity:.85;z-index:5;}
+  #card-5:checked~#article-1{transform:translateY(-144px) scale(.85);opacity:.8;z-index:4;}
+  #card-5:checked~#article-2{transform:translateY(-192px) scale(.8);opacity:.75;z-index:3;}
+  #card-5:checked~#article-3{transform:translateY(-240px) scale(.75);opacity:.7;z-index:2;}
+  #card-5:checked~#article-4{transform:translateY(-288px) scale(.7);opacity:.65;z-index:1;}
+
+  #card-6:checked~#article-6{transform:translateY(0) scale(1);opacity:1;z-index:7;}
+  #card-6:checked~#article-7{transform:translateY(-48px) scale(.95);opacity:.9;z-index:6;}
+  #card-6:checked~#article-1{transform:translateY(-96px) scale(.9);opacity:.85;z-index:5;}
+  #card-6:checked~#article-2{transform:translateY(-144px) scale(.85);opacity:.8;z-index:4;}
+  #card-6:checked~#article-3{transform:translateY(-192px) scale(.8);opacity:.75;z-index:3;}
+  #card-6:checked~#article-4{transform:translateY(-240px) scale(.75);opacity:.7;z-index:2;}
+  #card-6:checked~#article-5{transform:translateY(-288px) scale(.7);opacity:.65;z-index:1;}
+
+  #card-7:checked~#article-7{transform:translateY(0) scale(1);opacity:1;z-index:7;}
+  #card-7:checked~#article-1{transform:translateY(-48px) scale(.95);opacity:.9;z-index:6;}
+  #card-7:checked~#article-2{transform:translateY(-96px) scale(.9);opacity:.85;z-index:5;}
+  #card-7:checked~#article-3{transform:translateY(-144px) scale(.85);opacity:.8;z-index:4;}
+  #card-7:checked~#article-4{transform:translateY(-192px) scale(.8);opacity:.75;z-index:3;}
+  #card-7:checked~#article-5{transform:translateY(-240px) scale(.75);opacity:.7;z-index:2;}
+  #card-7:checked~#article-6{transform:translateY(-288px) scale(.7);opacity:.65;z-index:1;}
+</style>
+
+<div class='pbi-center'>
+  <div class='wrapper'>
+    <section>
+      <!-- Radios drive which card is 'active'. #1 is default (checked). -->
+      <input class='sr-only' id='card-1' type='radio' name='panel' checked />
+      <input class='sr-only' id='card-2' type='radio' name='panel' />
+      <input class='sr-only' id='card-3' type='radio' name='panel' />
+      <input class='sr-only' id='card-4' type='radio' name='panel' />
+      <input class='sr-only' id='card-5' type='radio' name='panel' />
+      <input class='sr-only' id='card-6' type='radio' name='panel' />
+      <input class='sr-only' id='card-7' type='radio' name='panel' />
+
+      <!-- ===== 01 Business Understanding ===== -->
+      <!-- The label chevron jumps to the next radio (#card-2) -->
+      <article id='article-1'>
+        <header>
+          <h2>01 Business Understanding</h2>
+          <label for='card-2'>&#10539;</label>
+        </header>
+        <div>
+          <img src='https://images.unsplash.com/photo-1506744038136-46273834b3fb' alt='Business Understanding'>
+          <div class='story'>
+            <p>Ask relevant questions and define objectives for the problem to tackle.</p>
+            <p>In Power BI projects, this means knowing what stakeholders really need before gathering data.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ===== 02 Data Mining ===== -->
+      <!-- Using Picsum here as a light/fast placeholder -->
+      <article id='article-2'>
+        <header>
+          <h2>02 Data Mining</h2>
+          <label for='card-3'>&#10539;</label>
+        </header>
+        <div>
+          <img src='https://picsum.photos/id/1003/500/360' alt='Data Mining'>
+          <div class='story'>
+            <p>Gather and scrape data necessary for the project from different sources.</p>
+            <p>In Power BI, this can include Excel sheets, SQL databases, and APIs.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ===== 03 Data Cleaning ===== -->
+      <article id='article-3'>
+        <header>
+          <h2>03 Data Cleaning</h2>
+          <label for='card-4'>&#10539;</label>
+        </header>
+        <div>
+          <img src='https://images.unsplash.com/photo-1581092915369-2e83c9c4b0ec' alt='Data Cleaning'>
+          <div class='story'>
+            <p>Fix inconsistencies within the data and handle missing values.</p>
+            <p>Clean data is essential before loading into Power BI for reliable insights.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ===== 04 Data Exploration ===== -->
+      <article id='article-4'>
+        <header>
+          <h2>04 Data Exploration</h2>
+          <label for='card-5'>&#10539;</label>
+        </header>
+        <div>
+          <img src='https://images.unsplash.com/photo-1529107386315-e1a2ed48a620' alt='Data Exploration'>
+          <div class='story'>
+            <p>Form hypotheses about your defined problem by visually analysing the data.</p>
+            <p>Power BI's charts and visuals help identify trends and outliers at this stage.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ===== 05 Feature Engineering ===== -->
+      <article id='article-5'>
+        <header>
+          <h2>05 Feature Engineering</h2>
+          <label for='card-6'>&#10539;</label>
+        </header>
+        <div>
+          <img src='https://images.unsplash.com/photo-1555949963-aa79dcee981c' alt='Feature Engineering'>
+          <div class='story'>
+            <p>Select important features and create more meaningful ones from existing data.</p>
+            <p>In Power BI, this may involve calculated columns, measures, and grouping data.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ===== 06 Predictive Modelling ===== -->
+      <article id='article-6'>
+        <header>
+          <h2>06 Predictive Modelling</h2>
+          <label for='card-7'>&#10539;</label>
+        </header>
+        <div>
+          <img src='https://images.unsplash.com/photo-1519389950473-47ba0277781c' alt='Predictive Modelling'>
+          <div class='story'>
+            <p>Train models, evaluate them, and make predictions.</p>
+            <p>Power BI can integrate with R and Python scripts to run advanced analytics.</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ===== 07 Data Visualization ===== -->
+      <!-- Loops back to the first card to create a cycle -->
+      <article id='article-7'>
+        <header>
+          <h2>07 Data Visualization</h2>
+          <label for='card-1'>&#10539;</label>
+        </header>
+        <div>
+          <img src='https://images.unsplash.com/photo-1551288049-bebda4e38f71' alt='Data Visualization'>
+          <div class='story'>
+            <p>Communicate findings with stakeholders using plots and interactive visuals.</p>
+            <p>In Power BI, dashboards and reports bring the story to life.</p>
+          </div>
+        </div>
+      </article>
+
+    </section>
+  </div>
+</div>
+"
